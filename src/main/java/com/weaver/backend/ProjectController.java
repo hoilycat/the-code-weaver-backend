@@ -1,17 +1,16 @@
 package com.weaver.backend;
 
-//import org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
 
 @RestController
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "http://localhost:5173")
-
 public class ProjectController {
     private final ProjectRepository projectRepository;
 
@@ -19,17 +18,41 @@ public class ProjectController {
         this.projectRepository = projectRepository;
     }
 
-    //모든 프로젝트 목록 가져오기(전체보기)
     @GetMapping
     public List<Project> getProjects(){
-            return projectRepository.findAll();
+        return projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
-    //개별 프로젝트 상세 조회( 상세 페이지용)
     @GetMapping("/{id}")
     public Project getProjectById(@PathVariable Long id){
         return projectRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("해당 프로젝트를 찾을 수 없어요"));
+                .orElseThrow(() -> new RuntimeException("해당 프로젝트를 찾을 수 없어요"));
     }
 
+    @PostMapping
+    public Project createProject(@RequestBody Project project){
+        return projectRepository.save(project);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteProject(@PathVariable Long id) {
+        projectRepository.deleteById(id);
+    }
+
+    @PostMapping("/upload-multiple")
+    public List<String> uploadMultipleFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
+        List<String> filePaths = new ArrayList<>();
+        String uploadDir = System.getProperty("user.dir") + "/uploads/";
+        File folder = new File(uploadDir);
+        if (!folder.exists()) folder.mkdirs();
+
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                file.transferTo(new File(uploadDir + fileName));
+                filePaths.add("/uploads/" + fileName);
+            }
+        }
+        return filePaths;
+    }
 }
