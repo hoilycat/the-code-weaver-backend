@@ -1,6 +1,8 @@
 # ⚙️ Backend: The Weaver Content Management API
 
 > **"Storing the threads of creativity."**
+> Production API: https://the-code-weaver-backend.onrender.com
+>
 > 전시물 데이터를 안전하게 저장하고, 대용량 이미지 자산을 효율적으로 관리하는 Spring Boot 기반의 REST API 서버입니다.
 > 관리자가 직접 포트폴리오를 업데이트할 수 있는 CMS(Content Management System) 기능을 제공합니다.
 
@@ -126,7 +128,7 @@ public List<String> uploadMultipleFiles(@RequestParam("files") List<MultipartFil
 관리자 비밀번호를 `application.properties`의 `${MY_ADMIN_PASSWORD}` 형식으로 관리하여 소스 코드 유출 시에도 보안을 유지합니다.
 
 **CORS 정책**
-프론트엔드(`localhost:5173`)와의 안전한 통신을 위해 CORS 정책을 명시적으로 설정했습니다.
+프론트엔드 배포 환경(`https://the-weaver.vercel.app`) 및 로컬 환경(`localhost:5173`)과의 안전한 통신을 위해 CORS 정책을 명시적으로 설정했습니다.
 
 ---
 
