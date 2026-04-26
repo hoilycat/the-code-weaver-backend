@@ -169,7 +169,6 @@ erDiagram
     PROJECT ||--o{ PROJECT_IMAGES : "has many"
 ```
 
-> **💡 팁:** 이미지 파일로 직접 넣고 싶으시다면 위 코드를 지우고 `![ERD 설명](./이미지경로.png)` 형식으로 작성하시면 됩니다.
 
 ---
 
