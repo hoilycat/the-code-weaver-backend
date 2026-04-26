@@ -1,6 +1,13 @@
 # ⚙️ Backend: The Weaver Content Management API
 
 > **"Storing the threads of creativity."**
+><div align="center">
+>  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot"/>
+>  <img src="https://img.shields.io/badge/Java_17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
+>  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL"/>
+>  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Render"/>
+></div>
+><br><br>
 > Production API: https://the-code-weaver-backend.onrender.com
 >
 > 전시물 데이터를 안전하게 저장하고, 대용량 이미지 자산을 효율적으로 관리하는 Spring Boot 기반의 REST API 서버입니다.
@@ -56,12 +63,11 @@ graph TD
 
 | 분류 | 기술 |
 |---|---|
-| Framework | Spring Boot 3.4.x |
-| Language | Java 17 |
-| Database | MySQL (Production) / H2 (Development) |
-| ORM | Spring Data JPA |
-| Build Tool | Maven |
-| 코드 최적화 | Lombok |
+| **Framework** | <img src="https://img.shields.io/badge/Spring_Boot_3.4.x-6DB33F?style=flat-square&logo=spring-boot&logoColor=white"/> |
+| **Language** | <img src="https://img.shields.io/badge/Java_17-ED8B00?style=flat-square&logo=openjdk&logoColor=white"/> |
+| **Database** | <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white"/> <img src="https://img.shields.io/badge/H2_Database-4479A1?style=flat-square&logo=h2&logoColor=white"/> |
+| **ORM** | <img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=flat-square&logo=spring&logoColor=white"/> |
+| **Build Tool** | <img src="https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apache-maven&logoColor=white"/> |
 
 ---
 
