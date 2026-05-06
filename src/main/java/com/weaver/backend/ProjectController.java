@@ -1,18 +1,30 @@
 package com.weaver.backend;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://the-code-weaver-frontend.vercel.app"}) // 배포 주소도 추가
 public class ProjectController {
     private final ProjectRepository projectRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${supabase.url}")
+    private String supabaseUrl;
+
+    @Value("${supabase.key}")
+    private String supabaseKey;
+
+    @Value("${supabase.bucket}")
+    private String supabaseBucket;
 
     public ProjectController(ProjectRepository projectRepository){
         this.projectRepository = projectRepository;
@@ -61,21 +73,38 @@ public class ProjectController {
         projectRepository.deleteById(id);
     }
 
-    // 6. 여러 장 업로드 API
+    // 6. 여러 장 업로드 API (Supabase Storage 연동)
     @PostMapping("/upload-multiple")
     public List<String> uploadMultipleFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
-        List<String> filePaths = new ArrayList<>();
-        String uploadDir = System.getProperty("user.dir") + "/uploads/";
-        File folder = new File(uploadDir);
-        if (!folder.exists()) folder.mkdirs();
+        List<String> publicUrls = new ArrayList<>();
 
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
                 String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                file.transferTo(new File(uploadDir + fileName));
-                filePaths.add("/uploads/" + fileName);
+                
+                // Supabase Storage 업로드 URL
+                String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, supabaseBucket, fileName);
+
+                // 헤더 설정
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Authorization", "Bearer " + supabaseKey);
+                headers.set("apikey", supabaseKey);
+                headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+
+                HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
+
+                try {
+                    // 1. Supabase에 파일 업로드 (POST)
+                    restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
+                    
+                    // 2. 업로드 성공 시 Public URL 생성
+                    String publicUrl = String.format("%s/storage/v1/object/public/%s/%s", supabaseUrl, supabaseBucket, fileName);
+                    publicUrls.add(publicUrl);
+                } catch (Exception e) {
+                    System.err.println("Upload failed for " + fileName + ": " + e.getMessage());
+                }
             }
         }
-        return filePaths;
+        return publicUrls;
     }
-}
+}
