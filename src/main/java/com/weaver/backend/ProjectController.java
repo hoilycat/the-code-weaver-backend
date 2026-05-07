@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -97,9 +98,7 @@ public class ProjectController {
                 continue;
             }
 
-            String originalName = file.getOriginalFilename() == null ? "image" : file.getOriginalFilename();
-            String safeName = originalName.replaceAll("[\\\\/]+", "_");
-            String fileName = "uploads/" + System.currentTimeMillis() + "_" + safeName;
+            String fileName = "uploads/" + System.currentTimeMillis() + "_" + UUID.randomUUID() + getFileExtension(file);
 
             String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, supabaseBucket, fileName);
 
@@ -127,5 +126,20 @@ public class ProjectController {
         }
 
         return publicUrls;
+    }
+
+    private String getFileExtension(MultipartFile file) {
+        String originalName = file.getOriginalFilename();
+        if (originalName == null) {
+            return "";
+        }
+
+        int dotIndex = originalName.lastIndexOf('.');
+        if (dotIndex < 0 || dotIndex == originalName.length() - 1) {
+            return "";
+        }
+
+        String extension = originalName.substring(dotIndex).toLowerCase();
+        return extension.matches("\\.[a-z0-9]+") ? extension : "";
     }
 }
