@@ -2,17 +2,36 @@ package com.weaver.backend;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = {"http://localhost:5173", "https://the-code-weaver-frontend.vercel.app"}) // 배포 주소도 추가
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "https://the-code-weaver-frontend.vercel.app",
+        "https://the-weaver.vercel.app"
+})
 public class ProjectController {
     private final ProjectRepository projectRepository;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -26,30 +45,26 @@ public class ProjectController {
     @Value("${supabase.bucket}")
     private String supabaseBucket;
 
-    public ProjectController(ProjectRepository projectRepository){
+    public ProjectController(ProjectRepository projectRepository) {
         this.projectRepository = projectRepository;
     }
 
-    // 1. 모든 프로젝트 목록 가져오기 (최신순)
     @GetMapping
-    public List<Project> getProjects(){
+    public List<Project> getProjects() {
         return projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
-    // 2. 개별 프로젝트 상세 조회
     @GetMapping("/{id}")
-    public Project getProjectById(@PathVariable Long id){
+    public Project getProjectById(@PathVariable Long id) {
         return projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("해당 프로젝트를 찾을 수 없어요"));
+                .orElseThrow(() -> new RuntimeException("Project not found."));
     }
 
-    // 3. 새 프로젝트 등록
     @PostMapping
-    public Project createProject(@RequestBody Project project){
+    public Project createProject(@RequestBody Project project) {
         return projectRepository.save(project);
     }
 
-    // 4. 프로젝트 수정
     @PutMapping("/{id}")
     public Project updateProject(@PathVariable Long id, @RequestBody Project newProject) {
         return projectRepository.findById(id)
@@ -61,50 +76,56 @@ public class ProjectController {
                     project.setLink(newProject.getLink());
                     project.setSize(newProject.getSize());
                     project.setStatus(newProject.getStatus());
-                    project.setImages(newProject.getImages()); // 사진 리스트 업데이트
-                    project.setSnapshot(newProject.getSnapshot()); // 대표 사진 업데이트
+                    project.setImages(newProject.getImages());
+                    project.setSnapshot(newProject.getSnapshot());
                     return projectRepository.save(project);
-                }).orElseThrow(() -> new RuntimeException("프로젝트를 찾을 수 없습니다."));
+                })
+                .orElseThrow(() -> new RuntimeException("Project not found."));
     }
 
-    // 5. 프로젝트 삭제
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable Long id) {
         projectRepository.deleteById(id);
     }
 
-    // 6. 여러 장 업로드 API (Supabase Storage 연동)
     @PostMapping("/upload-multiple")
     public List<String> uploadMultipleFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
         List<String> publicUrls = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            if (!file.isEmpty()) {
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                
-                // Supabase Storage 업로드 URL
-                String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, supabaseBucket, fileName);
+            if (file.isEmpty()) {
+                continue;
+            }
 
-                // 헤더 설정
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Authorization", "Bearer " + supabaseKey);
-                headers.set("apikey", supabaseKey);
-                headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+            String originalName = file.getOriginalFilename() == null ? "image" : file.getOriginalFilename();
+            String safeName = originalName.replaceAll("[\\\\/]+", "_");
+            String fileName = "uploads/" + System.currentTimeMillis() + "_" + safeName;
 
-                HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
+            String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, supabaseBucket, fileName);
 
-                try {
-                    // 1. Supabase에 파일 업로드 (POST)
-                    restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
-                    
-                    // 2. 업로드 성공 시 Public URL 생성
-                    String publicUrl = String.format("%s/storage/v1/object/public/%s/%s", supabaseUrl, supabaseBucket, fileName);
-                    publicUrls.add(publicUrl);
-                } catch (Exception e) {
-                    System.err.println("Upload failed for " + fileName + ": " + e.getMessage());
-                }
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.set("apikey", supabaseKey);
+            headers.setContentType(MediaType.parseMediaType(file.getContentType()));
+
+            HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
+
+            try {
+                restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
+
+                String publicUrl = String.format(
+                        "%s/storage/v1/object/public/%s/%s",
+                        supabaseUrl,
+                        supabaseBucket,
+                        fileName
+                );
+                publicUrls.add(publicUrl);
+            } catch (Exception e) {
+                System.err.println("Upload failed for " + fileName + ": " + e.getMessage());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Supabase image upload failed", e);
             }
         }
+
         return publicUrls;
     }
-}
+}
