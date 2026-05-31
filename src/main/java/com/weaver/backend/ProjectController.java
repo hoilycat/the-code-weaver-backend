@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -53,6 +54,12 @@ public class ProjectController {
     @GetMapping
     public List<Project> getProjects() {
         return projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+    }
+
+    @GetMapping("/wake-up")
+    public Map<String, String> wakeUp() {
+        projectRepository.count();
+        return Map.of("status", "ok");
     }
 
     @GetMapping("/{id}")
