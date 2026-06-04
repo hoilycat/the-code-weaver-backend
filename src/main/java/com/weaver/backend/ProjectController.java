@@ -1,7 +1,6 @@
 package com.weaver.backend;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -35,7 +34,7 @@ import java.util.UUID;
         "https://the-weaver.vercel.app"
 })
 public class ProjectController {
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${supabase.url}")
@@ -47,53 +46,39 @@ public class ProjectController {
     @Value("${supabase.bucket}")
     private String supabaseBucket;
 
-    public ProjectController(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
     }
 
     @GetMapping
     public List<Project> getProjects() {
-        return projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        return projectService.getAllProjects();
     }
 
     @GetMapping("/wake-up")
     public Map<String, String> wakeUp() {
-        projectRepository.count();
+        projectService.countProjects();
         return Map.of("status", "ok");
     }
 
     @GetMapping("/{id}")
     public Project getProjectById(@PathVariable Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found."));
+        return projectService.getProjectById(id);
     }
 
     @PostMapping
     public Project createProject(@RequestBody Project project) {
-        return projectRepository.save(project);
+        return projectService.createProject(project);
     }
 
     @PutMapping("/{id}")
     public Project updateProject(@PathVariable Long id, @RequestBody Project newProject) {
-        return projectRepository.findById(id)
-                .map(project -> {
-                    project.setTitle(newProject.getTitle());
-                    project.setCategory(newProject.getCategory());
-                    project.setDescription(newProject.getDescription());
-                    project.setPeriod(newProject.getPeriod());
-                    project.setLink(newProject.getLink());
-                    project.setSize(newProject.getSize());
-                    project.setStatus(newProject.getStatus());
-                    project.setImages(newProject.getImages());
-                    project.setSnapshot(newProject.getSnapshot());
-                    return projectRepository.save(project);
-                })
-                .orElseThrow(() -> new RuntimeException("Project not found."));
+        return projectService.updateProject(id, newProject);
     }
 
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable Long id) {
-        projectRepository.deleteById(id);
+        projectService.deleteProject(id);
     }
 
     @PostMapping("/upload-multiple")
