@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Wake backend
         run: |
-          curl --fail --silent --show-error --max-time 30 \
-            https://the-code-weaver-backend.onrender.com/api/projects/wake-up
+          curl --silent --show-error --max-time 90 \
+            https://the-code-weaver-backend.onrender.com/api/projects/wake-up || true
