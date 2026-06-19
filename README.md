@@ -228,7 +228,3 @@ cd the-code-weaver-backend
 - [Live Site](https://the-weaver.vercel.app)
 ---
 
-## 🔗 Related
-
-- [Frontend Repository](https://github.com/hoilycat/the-code-weaver-frontend) — React 19 + GSAP + Framer Motion
-- [Live Site](https://the-weaver.vercel.app)
